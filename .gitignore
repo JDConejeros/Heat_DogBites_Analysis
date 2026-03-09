@@ -49,9 +49,10 @@ po/*~
 rsconnect/
 
 # Specific files 
-04_Docs_ref/
-05_Paper/
 01_Input/climate/
 01_Input/district_geo/
 01_Input/dogs_bites/
 01_Input/poverty/
+04_Docs_ref/
+05_Paper/
+ 

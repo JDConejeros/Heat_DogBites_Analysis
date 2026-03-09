@@ -10,13 +10,13 @@ inp <- "01_Input/"
 
 ## 1 Open data ----
 
-dogs <- rio::import(paste0(inp, "dogs_bites/", "2024-datos-mordedores.xlsx")) |> 
+dogs <- rio::import(paste0(inp, "dogs_bites/", "bites_2019-2024.xlsx")) |> 
   clean_names()
 
-temp <- rio::import(paste0(inp, "clime/", "temperature_daily_district.csv")) |> 
+temp <- rio::import(paste0(inp, "climate/", "temperature_daily_district.csv")) |> 
   clean_names()
 
-ndvi <- rio::import(paste0(inp, "clime/", "ndvi_daily_district.csv")) |> 
+ndvi <- rio::import(paste0(inp, "climate/", "ndvi_daily_district.csv")) |> 
   clean_names()
 
 pov <- rio::import(paste0(inp, "poverty/", "casen_2017.dta")) |> 
