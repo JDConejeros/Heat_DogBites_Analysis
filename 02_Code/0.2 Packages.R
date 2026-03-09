@@ -37,5 +37,7 @@ install_load(c("rio",
                "ggmap", 
                "maptiles",
                "survey",
-               "imputeTS"
+               "imputeTS",
+               "stringr",
+                "lubridate"
                ))
