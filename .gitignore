@@ -51,3 +51,7 @@ rsconnect/
 # Specific files 
 04_Docs_ref/
 05_Paper
+01_Input/climate/
+01_Input/district_geo/
+01_Input/dig_bites/
+01_Input/poverty/
