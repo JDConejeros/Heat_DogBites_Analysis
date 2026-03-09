@@ -36,5 +36,6 @@ install_load(c("rio",
                "sf", 
                "ggmap", 
                "maptiles",
-               "survey"
+               "survey",
+               "imputeTS"
                ))

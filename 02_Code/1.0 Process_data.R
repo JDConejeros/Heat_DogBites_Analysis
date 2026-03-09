@@ -23,19 +23,116 @@ ndvi <- rio::import(paste0(inp, "climate/", "ndvi_daily_district.csv")) |>
 pov <- rio::import(paste0(inp, "poverty/", "casen_2017.dta")) |> 
   clean_names()
 
+geo <- rio::import(paste0(inp, "data_analysis/", "district_geo.Rdata")) 
+
 ## 2 Process Dogs Bite data ----
 
 glimpse(dogs)
+
+dogs <- dogs |> 
+  select(fecha_mordedura, comuna_ocurrio_mordedura, lugar_mordedura2, tipo_mordedura, sexo, edad_num, 
+         grupo_comuna_subdere, glosa_grupo_comuna_subdere, 
+         total_perros_suma_uc, poblacion_2022      
+  ) |>
+  mutate(
+    date = as.Date(fecha_mordedura, format = "%Y-%m-%d"),
+    year = year(date),
+    month = month(date),
+    day = day(date),
+    day_year = lubridate::yday(date),
+    day_month = lubridate::day(date),
+    day_week = lubridate::wday(date, label = TRUE, abbr = FALSE),
+    weekends = if_else(day_week %in% c("Saturday", "Sunday"), 1, 0),
+    season = case_when(
+      (month == 12 & day_month >= 21) | (month %in% c(1, 2)) | (month == 3 & day_month <= 20) ~ "Summer",
+      (month == 3 & day_month >= 21) | (month %in% c(4, 5)) | (month == 6 & day_month <= 20) ~ "Autumn",
+      (month == 6 & day_month >= 21) | (month %in% c(7, 8)) | (month == 9 & day_month <= 20) ~ "Winter",
+      (month == 9 & day_month >= 21) | (month %in% c(10, 11)) | (month == 12 & day_month <= 20) ~ "Spring"
+    ),
+    district = comuna_ocurrio_mordedura,
+    place = if_else(lugar_mordedura2 == "Dentro de Vivienda", "Indoor", if_else(lugar_mordedura2 == "Lugar Público", "Outdoor", NA_character_)),
+    bite_type = if_else(tipo_mordedura == "Única", "Unique", if_else(tipo_mordedura == "Múltiple", "Multiple", NA_character_))
+  )
+
 
 ## 3 Process Temp data ----
 
 glimpse(temp)
 
+temp <- temp |> 
+  mutate(date = as.Date(date)) |> 
+  dplyr::select(geometry_id, date, temperature_2m, temperature_2m_min, temperature_2m_max)
+
 ## 4 Process NDVI data ----
 
 glimpse(ndvi)
 
-## 5 Process Poverty data ----
+ndvi <- ndvi |> 
+  mutate(date = as.Date(date)) |> 
+  dplyr::select(geometry_id, date, ndvi)
+
+## 5. Data climates variables ----
+
+start_date <- as.Date("2019-01-01")
+end_date <- as.Date("2025-12-31")
+
+glimpse(geo)
+
+clim <- geo |> 
+  select(geometry_id, codigo_region, codigo_comuna) |> 
+  mutate(date = list(seq.Date(start_date, end_date, by = "day"))) |> 
+  unnest(cols = c(date)) |> 
+  left_join(temp, by = c("geometry_id", "date")) |> 
+  left_join(ndvi, by = c("geometry_id", "date"))
+
+# Impute ndvi data 
+
+green <- clim |> 
+  dplyr::select(codigo_comuna, date, ndvi) |>
+  group_by(codigo_comuna) |>
+  mutate(
+    ndvi_kalman = na_kalman(
+      ndvi,
+      model = "StructTS",
+      smooth = TRUE
+    )
+  ) |>
+  ungroup()
+
+glimpse(green)
+
+# Join with clim data 
+clim <- clim |> 
+  left_join(green |> dplyr::select(codigo_comuna, date, ndvi_kalman), by = c("codigo_comuna", "date")) 
+
+# Add spatial information 
+clim <- clim |> 
+  left_join(geo, by = c("geometry_id", "codigo_region", "codigo_comuna"))
+
+clim <- clim |> 
+  relocate(nombre_region, .after = codigo_region) |> 
+  relocate(nombre_comuna, .after = codigo_comuna)
+
+clim <- clim |> 
+  select(-geometry)
+
+# Test results 
+test <- clim |> 
+  group_by(codigo_region, nombre_region, codigo_comuna, nombre_comuna) |> 
+  summarise(
+    mean_temp = mean(temperature_2m, na.rm = TRUE),
+    min_temp = mean(temperature_2m_min, na.rm = TRUE),
+    max_temp = mean(temperature_2m_max, na.rm = TRUE),
+    na_mean = sum(is.na(temperature_2m)),
+    mean_ndvi = mean(ndvi_kalman, na.rm = TRUE),
+    na_ndvi = sum(is.na(ndvi_kalman)),
+          )
+
+export(test, paste0(inp, out, "temp_ndvi_summary_district.xlsx"))
+
+save(clim, file=paste0(inp, out, "Temp_ndvi_2019_2025", ".RData"))
+
+## 6 Process Poverty data ----
 
 glimpse(pov)
 
