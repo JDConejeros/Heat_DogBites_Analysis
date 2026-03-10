@@ -39,5 +39,6 @@ install_load(c("rio",
                "survey",
                "imputeTS",
                "stringr",
-                "lubridate"
+                "lubridate",
+                "zoo"
                ))
