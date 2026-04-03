@@ -40,5 +40,9 @@ install_load(c("rio",
                "imputeTS",
                "stringr",
                 "lubridate",
-                "zoo"
+                "zoo",
+                "MASS",
+                "broom",
+                "TMB",
+                "glmmTMB"
                ))

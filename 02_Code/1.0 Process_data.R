@@ -281,5 +281,5 @@ pov_mun <- quintil
 glimpse(pov_mun)
 
 # Save data 
-save(pov_mun, file=paste0(inp, out, "Poverty_casen_RM_2017", ".RData"))
+save(pov_mun, file=paste0(inp, out, "Poverty_casen_2017", ".RData"))
 
